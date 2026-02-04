@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Metadata Manager Pro</title>
+    <title>Video Metadata Manager Pro v2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/exiftool-wasm/dist/index.js"></script>
     <script src="https://unpkg.com/browser-fs-access"></script>
@@ -27,8 +27,8 @@
 
     <nav class="sticky top-0 z-50 glass border-b border-slate-200 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="bg-indigo-600 p-2 rounded-lg text-white">🎬</div>
-            <h1 class="text-xl font-extrabold tracking-tight">VideoMeta <span class="text-indigo-600">Pro</span></h1>
+            <div class="bg-indigo-600 p-2 rounded-lg text-white font-bold italic">VM</div>
+            <h1 class="text-xl font-extrabold tracking-tight">VideoMeta <span class="text-indigo-600 font-black">Pro</span></h1>
         </div>
         <button onclick="loadVideos()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95">
             + Muat Video
@@ -36,32 +36,27 @@
     </nav>
 
     <main class="max-w-7xl mx-auto p-6 lg:p-10">
-        
-        <div id="emptyState" class="flex flex-col items-center justify-center py-32 text-center border-4 border-dashed border-slate-200 rounded-[3rem]">
-            <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-6">📂</div>
-            <h2 class="text-2xl font-bold text-slate-400">Tarik File ke Sini</h2>
-            <p class="text-slate-400 mt-2">Atau klik tombol "Muat Video" di atas untuk memulai.</p>
+        <div id="emptyState" class="flex flex-col items-center justify-center py-32 text-center border-4 border-dashed border-slate-200 rounded-[3rem] bg-white/50">
+            <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">📂</div>
+            <h2 class="text-2xl font-black text-slate-400">Tarik Video ke Sini</h2>
+            <p class="text-slate-400 mt-2 font-medium">Bekerja lokal tanpa upload. Privasi terjaga 100%.</p>
         </div>
 
         <div id="dashboardArea" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
             <aside class="lg:col-span-1 space-y-6">
-                <div class="glass p-6 rounded-[2rem] border border-white shadow-xl sticky top-24">
+                <div class="glass p-6 rounded-[2.5rem] border border-white shadow-xl sticky top-24">
                     <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Kontrol Panel</h3>
-                    
                     <div class="space-y-4">
-                        <div class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-                            <label class="block text-[10px] font-bold text-emerald-600 mb-2 uppercase">Tambah</label>
+                        <div class="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                            <label class="block text-[10px] font-bold text-emerald-600 mb-2 uppercase">Tambah Tag</label>
                             <input type="text" id="addInput" placeholder="tag1, tag2..." class="w-full px-3 py-2 rounded-lg border border-emerald-200 outline-none text-sm">
-                            <button onclick="applyBatch('TAMBAH')" class="w-full mt-3 bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs shadow-md">Eksekusi</button>
+                            <button onclick="applyBatch('TAMBAH')" class="w-full mt-3 bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition-all">Terapkan Tambah</button>
                         </div>
-
-                        <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
-                            <label class="block text-[10px] font-bold text-rose-600 mb-2 uppercase">Hapus</label>
+                        <div class="bg-rose-50/50 p-5 rounded-2xl border border-rose-100">
+                            <label class="block text-[10px] font-bold text-rose-600 mb-2 uppercase">Hapus Tag</label>
                             <input type="text" id="delInput" placeholder="keyword..." class="w-full px-3 py-2 rounded-lg border border-rose-200 outline-none text-sm">
-                            <button onclick="applyBatch('HAPUS')" class="w-full mt-3 bg-rose-500 text-white font-bold py-2 rounded-lg text-xs shadow-md">Eksekusi</button>
+                            <button onclick="applyBatch('HAPUS')" class="w-full mt-3 bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition-all">Terapkan Hapus</button>
                         </div>
-
                         <button onclick="exportTxt()" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2 mt-4 shadow-xl">
                             📥 Export Report (.TXT)
                         </button>
@@ -72,12 +67,12 @@
             <section class="lg:col-span-3">
                 <div class="flex justify-between items-end mb-8">
                     <div>
-                        <h2 class="text-2xl font-black text-slate-800">Daftar File</h2>
-                        <p id="fileCountText" class="text-sm text-slate-400 font-medium"></p>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">Daftar Video</h2>
+                        <p id="fileCountText" class="text-sm text-slate-400 font-semibold"></p>
                     </div>
-                    <div id="masterProgress" class="hidden w-48 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                    <div id="masterProgress" class="hidden w-48 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
                         <div class="flex justify-between text-[9px] font-black text-indigo-600 mb-1 uppercase">
-                            <span id="statusLabel">Processing</span>
+                            <span id="statusLabel">Syncing</span>
                             <span id="masterPercent">0%</span>
                         </div>
                         <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -85,7 +80,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="cardGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </section>
         </div>
@@ -100,56 +94,69 @@
                     multiple: true,
                     types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }]
                 });
-                initDashboard();
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('dashboardArea').classList.remove('hidden');
+                document.getElementById('fileCountText').innerText = `${currentHandles.length} File terpilih`;
+                renderCards();
             } catch (err) { console.warn("Dibatalkan"); }
-        }
-
-        function initDashboard() {
-            document.getElementById('emptyState').classList.add('hidden');
-            document.getElementById('dashboardArea').classList.remove('hidden');
-            document.getElementById('fileCountText').innerText = `${currentHandles.length} Video Terpilih`;
-            renderCards();
         }
 
         async function renderCards() {
             const grid = document.getElementById('cardGrid');
-            grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-400 animate-pulse">Membaca data teknis...</div>';
+            grid.innerHTML = '';
             
-            let html = "";
-            for (const handle of currentHandles) {
-                const file = await handle.getFile();
-                const meta = await exiftool.read(file);
-                const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
-                const tags = meta.Keywords || meta.Subject || "Kosong";
-
-                html += `
-                <div class="card-anim bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                    <div class="flex justify-between mb-4">
-                        <span class="bg-indigo-50 text-indigo-600 text-[9px] font-black px-3 py-1 rounded-full">60 FPS SUPPORT</span>
-                        <span class="text-slate-300 text-xs font-mono">${size}</span>
+            // Step 1: Buat Skeletons (Biar kelihatan instan)
+            currentHandles.forEach((h, i) => {
+                grid.innerHTML += `
+                <div id="card-${i}" class="card-anim bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm opacity-50">
+                    <div class="animate-pulse flex flex-col gap-4">
+                        <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+                        <div class="h-24 bg-slate-100 rounded-2xl"></div>
+                        <div class="h-4 bg-slate-50 rounded w-full"></div>
                     </div>
-                    <h4 class="text-sm font-bold text-slate-800 truncate mb-4">${file.name}</h4>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-slate-50 p-3 rounded-xl text-center">
-                            <p class="text-[8px] font-bold text-slate-400 uppercase">Res</p>
-                            <p class="text-xs font-black">${meta.ImageSize || 'N/A'}</p>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl text-center">
-                            <p class="text-[8px] font-bold text-slate-400 uppercase">FPS</p>
-                            <p class="text-xs font-black">${meta.VideoFrameRate || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Active Tags</p>
-                    <p class="text-[10px] text-slate-500 line-clamp-2 italic">${tags}</p>
                 </div>`;
-            }
-            grid.innerHTML = html;
+            });
+
+            // Step 2: Baca Metadata secara Paralel (Performance Boost)
+            const tasks = currentHandles.map(async (handle, index) => {
+                try {
+                    const file = await handle.getFile();
+                    const meta = await exiftool.read(file);
+                    const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                    const tags = meta.Keywords || meta.Subject || "Kosong";
+
+                    const card = document.getElementById(`card-${index}`);
+                    card.classList.remove('opacity-50');
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="bg-indigo-50 text-indigo-600 text-[9px] font-black px-3 py-1 rounded-full uppercase">Ready</span>
+                            <span class="text-slate-300 text-[10px] font-mono font-bold uppercase">${size}</span>
+                        </div>
+                        <h4 class="text-sm font-black text-slate-800 truncate mb-4" title="${file.name}">${file.name}</h4>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Res</p>
+                                <p class="text-xs font-black text-slate-700">${meta.ImageSize || 'N/A'}</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">FPS</p>
+                                <p class="text-xs font-black text-slate-700">${meta.VideoFrameRate || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Active Tags</p>
+                        <p class="text-[10px] text-slate-500 line-clamp-2 italic leading-relaxed">${tags}</p>
+                    `;
+                } catch (e) {
+                    document.getElementById(`card-${index}`).innerHTML = '<p class="text-rose-500 text-xs font-bold text-center py-10">Error membaca metadata</p>';
+                }
+            });
+            await Promise.all(tasks);
         }
 
         async function applyBatch(mode) {
             const val = mode === 'TAMBAH' ? document.getElementById('addInput').value : document.getElementById('delInput').value;
             const inputKws = val.split(',').map(k => k.trim()).filter(k => k);
-            if (!inputKws.length) return alert('Input kosong!');
+            if (!inputKws.length) return alert('Masukkan keyword dulu!');
 
             const bar = document.getElementById('masterProgress');
             bar.classList.remove('hidden');
@@ -167,7 +174,10 @@
                 if (mode === 'TAMBAH') inputKws.forEach(kw => { if (!tags.includes(kw)) tags.push(kw); });
                 else tags = tags.filter(kw => !inputKws.includes(kw));
 
-                const blob = await exiftool.write(file, { 'Keywords': tags.join(', '), 'Subject': tags.join(', ') });
+                // Mirror Sync & Flat String Policy (No Stars)
+                const finalStr = tags.join(', ');
+                const blob = await exiftool.write(file, { 'Keywords': finalStr, 'Subject': finalStr });
+                
                 const writer = await handle.createWritable();
                 await writer.write(blob);
                 await writer.close();
@@ -190,14 +200,11 @@
             a.click();
         }
 
-        // Drag and Drop Logic
         const dropZone = document.getElementById('emptyState');
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => {
-            dropZone.addEventListener(eName, e => { e.preventDefault(); e.stopPropagation(); });
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+            dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
         });
-        dropZone.addEventListener('drop', async (e) => {
-            if (e.dataTransfer.files.length > 0) loadVideos();
-        });
+        dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files.length) loadVideos(); });
     </script>
 </body>
 </html>
