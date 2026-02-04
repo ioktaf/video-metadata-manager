@@ -1,32 +1,23 @@
-const CACHE_NAME = 'vmeta-pro-v2.1';
+const CACHE_NAME = 'vmeta-v1';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://unpkg.com/exiftool-wasm/dist/index.js',
-  'https://unpkg.com/browser-fs-access'
+  'https://unpkg.com/exiftool-wasm/dist/index.js'
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
-  );
+  e.waitUntil(caches.keys().then((keys) => {
+    return Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+  }));
 });
 
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+  e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
 });
