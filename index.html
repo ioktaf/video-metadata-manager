@@ -57,8 +57,8 @@
             <button onclick="handleMetadata('HAPUS')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
                 Batch Hapus
             </button>
-            <button onclick="readAndExport()" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl transition-all active:scale-95 mt-2 flex items-center justify-center gap-2">
-                <span>📄</span> Baca & Export Metadata (.txt)
+            <button class="col-span-2 bg-slate-400 cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md mt-2 flex items-center justify-center gap-2 opacity-80">
+                <span>📄</span> Baca & Export Metadata (.txt) (coming soon....)
             </button>
         </div>
         
@@ -99,6 +99,7 @@
                         tagList = tagList.filter(kw => !inputKeywords.includes(kw));
                     }
 
+                    // Zero Stars Policy & Mirror Sync
                     const finalString = tagList.join(', ');
                     const updatedBlob = await exiftool.write(file, { 'Keywords': finalString, 'Subject': finalString });
 
@@ -106,29 +107,9 @@
                     await writable.write(updatedBlob);
                     await writable.close();
                 }
-                alert('Berhasil diproses!');
+                alert('Berhasil diproses secara lokal!');
             } catch (err) { console.error(err); }
             finally { setTimeout(() => document.getElementById('progressContainer').classList.add('hidden'), 3000); }
-        }
-
-        async function readAndExport() {
-            try {
-                const fileHandles = await window.showOpenFilePicker({
-                    multiple: true,
-                    types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }]
-                });
-                let report = `METADATA REPORT - ${new Date().toLocaleString()}\n\n`;
-                for (const handle of fileHandles) {
-                    const file = await handle.getFile();
-                    const meta = await exiftool.read(file);
-                    report += `FILE: ${file.name}\nRES: ${meta.ImageSize} | FPS: ${meta.VideoFrameRate}\nTAGS: ${meta.Keywords || meta.Subject}\n---\n\n`;
-                }
-                const blob = new Blob([report], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `Metadata_Report.txt`;
-                a.click();
-            } catch (err) { console.error(err); }
         }
 
         function updateProgress(current, total, name) {
