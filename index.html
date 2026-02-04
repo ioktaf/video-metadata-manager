@@ -3,6 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Metadata Manager Pro v2.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/exiftool-wasm/dist/index.js"></script>
+    <script src="https://unpkg.com/browser-fs-access"></script>
+    
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+        .card-anim { transition: all 0.3s ease; }
+        .card-anim:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-900">
+
+    <nav class="sticky top-0 z-50 glass border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white font-bold italic">VM</div>
+            <h1 class="text-xl font-extrabold tracking-tight">VideoMeta <span class="text-indigo-600 font-black">Pro</span></h1>
+        </div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden md:block">Local Processing Engine</div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 lg:p-10">
+        <div id="emptyState" class="flex flex-col items-center justify-center py-20 md:py-40 text-center border-4 border-dashed border-slate-200 rounded-[3rem] bg-white/50 transition-all hover:border-indigo-300">
+            <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mb-8 shadow-inner">📂</div>
+            
+            <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-2">Kelola Metadata Video</h2>
+            <p class="text-slate-400 mb-10 font-medium max-w-sm mx-auto">Tarik file video kamu ke sini atau gunakan tombol di bawah untuk memulai secara instan.</p>
+
+            <button onclick="loadVideos()" class="group flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-3xl font-black text-lg shadow-2xl shadow-indigo-200 transition-all active:scale-95">
+                <span class="text-2xl transition-transform group-hover:rotate-90">+</span>
+                <span>Muat Video</span>
+            </button>
+            
+            <p class="text-[10px] text-slate-300 mt-10 uppercase tracking-[0.2em] font-bold">Privasi Terjamin • No Upload</p>
+        </div>
+
+        <div id="dashboardArea" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="glass p-6 rounded-[2.5rem] border border-white shadow-xl sticky top-24">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kontrol Panel</h3>
+                        <button onclick="loadVideos()" class="text-indigo-600 hover:text-indigo-800 text-xl font-bold">+</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                            <label class="block text-[10px] font-bold text-emerald-600 mb-2 uppercase">Tambah Tag</label>
+                            <input type="text" id="addInput" placeholder="tag1, tag2..." class="w-full px-3 py-2 rounded-lg border border-emerald-200 outline-none text-sm">
+                            <button onclick="applyBatch('TAMBAH')" class="w-full mt-3 bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition-all">Terapkan Tambah</button>
+                        </div>
+                        <div class="bg-rose-50/50 p-5 rounded-2xl border border-rose-100">
+                            <label class="block text-[10px] font-bold text-rose-600 mb-2 uppercase">Hapus Tag</label>
+                            <input type="text" id="delInput" placeholder="keyword..." class="w-full px-3 py-2 rounded-lg border border-rose-200 outline-none text-sm">
+                            <button onclick="applyBatch('HAPUS')" class="w-full mt-3 bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition-all">Terapkan Hapus</button>
+                        </div>
+                        <button onclick="exportTxt()" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2 mt-4 shadow-xl">
+                            📥 Export Report (.TXT)
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="lg:col-span-3">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">Daftar Video</h2>
+                        <p id="fileCountText" class="text-sm text-slate-400 font-semibold"></p>
+                    </div>
+                    <div id="masterProgress" class="hidden w-48 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between text-[9px] font-black text-indigo-600 mb-1 uppercase">
+                            <span id="statusLabel">Syncing</span>
+                            <span id="masterPercent">0%</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div id="masterBar" class="h-full bg-indigo-600 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cardGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        let currentHandles = [];
+
+        async function loadVideos() {
+            try {
+                currentHandles = await window.showOpenFilePicker({
+                    multiple: true,
+                    types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }]
+                });
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('dashboardArea').classList.remove('hidden');
+                document.getElementById('fileCountText').innerText = `${currentHandles.length} File terpilih`;
+                renderCards();
+            } catch (err) { console.warn("Dibatalkan"); }
+        }
+
+        async function renderCards() {
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = '';
+            
+            currentHandles.forEach((h, i) => {
+                grid.innerHTML += `
+                <div id="card-${i}" class="card-anim bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm opacity-50">
+                    <div class="animate-pulse flex flex-col gap-4">
+                        <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+                        <div class="h-24 bg-slate-100 rounded-2xl"></div>
+                        <div class="h-4 bg-slate-50 rounded w-full"></div>
+                    </div>
+                </div>`;
+            });
+
+            const tasks = currentHandles.map(async (handle, index) => {
+                try {
+                    const file = await handle.getFile();
+                    const meta = await exiftool.read(file);
+                    const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                    const tags = meta.Keywords || meta.Subject || "Kosong";
+
+                    const card = document.getElementById(`card-${index}`);
+                    card.classList.remove('opacity-50');
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="bg-indigo-50 text-indigo-600 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Ready</span>
+                            <span class="text-slate-300 text-[10px] font-mono font-bold uppercase">${size}</span>
+                        </div>
+                        <h4 class="text-sm font-black text-slate-800 truncate mb-4" title="${file.name}">${file.name}</h4>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Res</p>
+                                <p class="text-xs font-black text-slate-700">${meta.ImageSize || 'N/A'}</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">FPS</p>
+                                <p class="text-xs font-black text-slate-700">${meta.VideoFrameRate || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Active Tags</p>
+                        <p class="text-[10px] text-slate-500 line-clamp-2 italic leading-relaxed">${tags}</p>
+                    `;
+                } catch (e) {
+                    document.getElementById(`card-${index}`).innerHTML = '<p class="text-rose-500 text-xs font-bold text-center py-10">Error membaca metadata</p>';
+                }
+            });
+            await Promise.all(tasks);
+        }
+
+        async function applyBatch(mode) {
+            const val = mode === 'TAMBAH' ? document.getElementById('addInput').value : document.getElementById('delInput').value;
+            const inputKws = val.split(',').map(k => k.trim()).filter(k => k);
+            if (!inputKws.length) return alert('Masukkan keyword dulu!');
+
+            const bar = document.getElementById('masterProgress');
+            bar.classList.remove('hidden');
+
+            for (let i = 0; i < currentHandles.length; i++) {
+                const handle = currentHandles[i];
+                const file = await handle.getFile();
+                const p = Math.round(((i + 1) / currentHandles.length) * 100);
+                document.getElementById('masterBar').style.width = p + '%';
+                document.getElementById('masterPercent').innerText = p + '%';
+
+                const meta = await exiftool.read(file);
+                let tags = (meta.Keywords || meta.Subject || "").toString().split(',').map(k => k.trim()).filter(k => k);
+
+                if (mode === 'TAMBAH') inputKws.forEach(kw => { if (!tags.includes(kw)) tags.push(kw); });
+                else tags = tags.filter(kw => !inputKws.includes(kw));
+
+                const finalStr = tags.join(', ');
+                const blob = await exiftool.write(file, { 'Keywords': finalStr, 'Subject': finalStr });
+                
+                const writer = await handle.createWritable();
+                await writer.write(blob);
+                await writer.close();
+            }
+            renderCards();
+            setTimeout(() => bar.classList.add('hidden'), 2000);
+        }
+
+        async function exportTxt() {
+            let report = `METADATA REPORT - ${new Date().toLocaleString()}\n\n`;
+            for (const handle of currentHandles) {
+                const file = await handle.getFile();
+                const meta = await exiftool.read(file);
+                report += `FILE: ${file.name}\nRES: ${meta.ImageSize} | FPS: ${meta.VideoFrameRate}\nTAGS: ${meta.Keywords || meta.Subject}\n---\n\n`;
+            }
+            const blob = new Blob([report], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Metadata_Report.txt`;
+            a.click();
+        }
+
+        const dropZone = document.getElementById('emptyState');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+            dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
+        });
+        dropZone.addEventListener('drop', (e) => { if (e.dataTransfer.files.length) loadVideos(); });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Metadata Manager Pro v2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/exiftool-wasm/dist/index.js"></script>
@@ -208,3 +423,4 @@
     </script>
 </body>
 </html>
+
