@@ -1,7 +1,7 @@
 {
-  "short_name": "VideoMetaPro",
-  "name": "Video Metadata Manager Pro v2.1",
-  "description": "Dashboard manajemen metadata video lokal tanpa upload.",
+  "short_name": "VideoMeta",
+  "name": "Video Metadata Manager",
+  "description": "Tool manajemen metadata video lokal tanpa upload.",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/1179/1179120.png",
@@ -12,6 +12,6 @@
   ],
   "start_url": "./index.html",
   "display": "standalone",
-  "theme_color": "#4f46e5",
-  "background_color": "#f8fafc"
+  "theme_color": "#10b981",
+  "background_color": "#f1f5f9"
 }
