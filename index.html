@@ -24,27 +24,27 @@
 <body class="bg-slate-100 min-h-screen flex flex-col items-center p-4 md:p-8 font-sans">
     <div class="glass max-w-5xl w-full p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-white">
         <header class="text-center mb-10">
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Metadata Manager Pro</h1>
-            <p class="text-sm text-slate-500 font-semibold uppercase tracking-widest">PWA Preview Edition • Local Sync</p>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Metadata Manager</h1>
+            <p class="text-sm text-slate-500 font-semibold uppercase tracking-widest">PWA Edition • Local Process • No Upload</p>
         </header>
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-1 space-y-6">
-                <div class="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-sm">
+                <div class="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100 shadow-sm">
                     <label class="block text-xs font-black text-emerald-700 mb-3 uppercase tracking-tighter">Tambah Keyword</label>
-                    <input type="text" id="addInput" placeholder="india, women, lab..." 
+                    <input type="text" id="addInput" placeholder="Contoh: lab, scientist, 2026" 
                            class="w-full px-4 py-3 rounded-xl border-none ring-1 ring-emerald-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
                     <button onclick="handleMetadata('TAMBAH')" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-200">
-                        Injeksi Tambah
+                        Tambah
                     </button>
                 </div>
 
-                <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100 shadow-sm">
+                <div class="bg-rose-50/50 p-6 rounded-3xl border border-rose-100 shadow-sm">
                     <label class="block text-xs font-black text-rose-700 mb-3 uppercase tracking-tighter">Hapus Keyword</label>
-                    <input type="text" id="delInput" placeholder="keyword dibuang..." 
+                    <input type="text" id="delInput" placeholder="Ketik keyword yang ingin dibuang..." 
                            class="w-full px-4 py-3 rounded-xl border-none ring-1 ring-rose-200 focus:ring-2 focus:ring-rose-500 outline-none transition-all">
                     <button onclick="handleMetadata('HAPUS')" class="w-full mt-4 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-rose-200">
-                        Hapus Batch
+                        Hapus
                     </button>
                 </div>
 
@@ -74,14 +74,14 @@
                             <thead class="sticky top-0 bg-slate-800 text-white uppercase font-bold tracking-wider">
                                 <tr>
                                     <th class="p-4 border-b border-slate-700">File Name</th>
-                                    <th class="p-4 border-b border-slate-700">Subject/Keywords</th>
+                                    <th class="p-4 border-b border-slate-700">Keywords/Subject</th>
                                     <th class="p-4 border-b border-slate-700 text-center">FPS</th>
                                     <th class="p-4 border-b border-slate-700 text-center">RES</th>
                                 </tr>
                             </thead>
                             <tbody id="metadataTableBody" class="text-slate-600 font-medium">
                                 <tr>
-                                    <td colspan="4" class="p-10 text-center text-slate-400 italic">Belum ada file yang dimuat.</td>
+                                    <td colspan="4" class="p-10 text-center text-slate-400 italic">Klik "Baca & Preview Data" untuk memulai.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -92,82 +92,92 @@
     </div>
 
     <script>
-        let lastReadData = "";
+        let lastReport = "";
+
+        // Fungsi Indikator Progres
+        function showProgress() { document.getElementById('progressContainer').classList.remove('hidden'); }
+        function hideProgress() { 
+            setTimeout(() => {
+                document.getElementById('progressContainer').classList.add('hidden');
+                document.getElementById('progressBar').style.width = '0%';
+            }, 2000);
+        }
+        function updateUIStatus(current, total, filename) {
+            const percent = Math.round((current / total) * 100);
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('percentText').innerText = percent + '%';
+            document.getElementById('statusText').innerText = `Proses: ${filename} (${current}/${total})`;
+        }
 
         async function handleMetadata(mode) {
-            const addVal = document.getElementById('addInput').value;
-            const delVal = document.getElementById('delInput').value;
-            const inputKeywords = (mode === 'TAMBAH' ? addVal : delVal).split(',').map(k => k.trim()).filter(k => k);
-            if (inputKeywords.length === 0) return alert('Input kosong!');
+            const val = mode === 'TAMBAH' ? document.getElementById('addInput').value : document.getElementById('delInput').value;
+            const inputKws = val.split(',').map(k => k.trim()).filter(k => k);
+            if (inputKws.length === 0) return alert('Input tidak boleh kosong!');
 
             try {
-                const fileHandles = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }] });
+                const handles = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }] });
                 showProgress();
-                for (let i = 0; i < fileHandles.length; i++) {
-                    const handle = fileHandles[i];
+                for (let i = 0; i < handles.length; i++) {
+                    const handle = handles[i];
                     const file = await handle.getFile();
-                    updateStatus(i + 1, fileHandles.length, file.name);
+                    updateUIStatus(i + 1, handles.length, file.name);
 
                     const meta = await exiftool.read(file);
-                    let tagList = (meta.Keywords || meta.Subject || "").toString().split(',').map(k => k.trim()).filter(k => k);
+                    let tags = (meta.Keywords || meta.Subject || "").toString().split(',').map(k => k.trim()).filter(k => k);
 
-                    if (mode === 'TAMBAH') inputKeywords.forEach(kw => { if (!tagList.includes(kw)) tagList.push(kw); });
-                    else tagList = tagList.filter(kw => !inputKeywords.includes(kw));
+                    if (mode === 'TAMBAH') inputKws.forEach(kw => { if (!tags.includes(kw)) tags.push(kw); });
+                    else tags = tags.filter(kw => !inputKws.includes(kw));
 
-                    const finalString = tagList.join(', ');
-                    const updatedBlob = await exiftool.write(file, { 'Keywords': finalString, 'Subject': finalString });
-                    const writable = await handle.createWritable();
-                    await writable.write(updatedBlob);
-                    await writable.close();
+                    const finalStr = tags.join(', ');
+                    const blob = await exiftool.write(file, { 'Keywords': finalStr, 'Subject': finalStr });
+                    const writer = await handle.createWritable();
+                    await writer.write(blob);
+                    await writer.close();
                 }
-                alert('Berhasil di-update!');
-            } catch (err) { console.error(err); } finally { hideProgress(); }
+                alert('Proses Update Selesai!');
+            } catch (e) { console.error(e); } finally { hideProgress(); }
         }
 
         async function readAndPreview() {
             try {
-                const fileHandles = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }] });
-                const tableBody = document.getElementById('metadataTableBody');
-                tableBody.innerHTML = "";
+                const handles = await window.showOpenFilePicker({ multiple: true, types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }] });
+                const tbody = document.getElementById('metadataTableBody');
+                tbody.innerHTML = "";
+                showProgress();
+                
                 let report = `METADATA REPORT - ${new Date().toLocaleString()}\n\n`;
 
-                for (const handle of fileHandles) {
+                for (let i = 0; i < handles.length; i++) {
+                    const handle = handles[i];
                     const file = await handle.getFile();
+                    updateUIStatus(i + 1, handles.length, file.name);
+
                     const meta = await exiftool.read(file);
                     const fps = meta.VideoFrameRate || meta.AvgFrameRate || "N/A";
                     const res = meta.ImageSize || "N/A";
                     const tags = meta.Keywords || meta.Subject || "N/A";
 
-                    const row = `<tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td class="p-4 font-bold text-slate-800 break-all">${file.name}</td>
-                        <td class="p-4 text-slate-500">${tags}</td>
-                        <td class="p-4 text-center font-mono">${fps}</td>
-                        <td class="p-4 text-center font-mono">${res}</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-
-                    report += `FILE: ${file.name} | FPS: ${fps} | RES: ${res}\nTAGS: ${tags}\n\n`;
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-50 hover:bg-slate-50">
+                            <td class="p-4 font-bold text-slate-800 break-all">${file.name}</td>
+                            <td class="p-4 text-slate-500">${tags}</td>
+                            <td class="p-4 text-center font-mono">${fps}</td>
+                            <td class="p-4 text-center font-mono">${res}</td>
+                        </tr>`;
+                    
+                    report += `FILE: ${file.name}\nFPS: ${fps} | RES: ${res}\nTAGS: ${tags}\n----------------\n\n`;
                 }
-                lastReadData = report;
+                lastReport = report;
                 document.getElementById('exportBtn').classList.remove('hidden');
-            } catch (err) { console.error(err); }
+            } catch (e) { console.error(e); } finally { hideProgress(); }
         }
 
         function exportToTxt() {
-            const blob = new Blob([lastReadData], { type: 'text/plain' });
+            const blob = new Blob([lastReport], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `Metadata_Report_${Date.now()}.txt`;
             a.click();
-        }
-
-        function showProgress() { document.getElementById('progressContainer').classList.remove('hidden'); }
-        function hideProgress() { setTimeout(() => document.getElementById('progressContainer').classList.add('hidden'), 3000); }
-        function updateStatus(c, t, n) {
-            const p = Math.round((c / t) * 100);
-            document.getElementById('progressBar').style.width = p + '%';
-            document.getElementById('percentText').innerText = p + '%';
-            document.getElementById('statusText').innerText = `Sync: ${c}/${t}`;
         }
     </script>
 </body>
