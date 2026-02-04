@@ -52,11 +52,12 @@
 
         <div class="grid grid-cols-2 gap-4 mt-8">
             <button onclick="handleMetadata('TAMBAH')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-                Batch Tambah
+                Tambah
             </button>
             <button onclick="handleMetadata('HAPUS')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-                Batch Hapus
+                Hapus
             </button>
+            
             <button class="col-span-2 bg-slate-400 cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-md mt-2 flex items-center justify-center gap-2 opacity-80">
                 <span>📄</span> Baca & Export Metadata (.txt) (coming soon....)
             </button>
@@ -78,6 +79,7 @@
             if (inputKeywords.length === 0) return alert('Input tidak boleh kosong!');
 
             try {
+                // Tetap menggunakan fitur batch/multiple selection
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
                     types: [{ description: 'Videos', accept: {'video/*': ['.mp4', '.mov', '.mkv']} }]
@@ -99,7 +101,7 @@
                         tagList = tagList.filter(kw => !inputKeywords.includes(kw));
                     }
 
-                    // Zero Stars Policy & Mirror Sync
+                    // Zero Stars Policy & Mirror Sync Tetap Aktif
                     const finalString = tagList.join(', ');
                     const updatedBlob = await exiftool.write(file, { 'Keywords': finalString, 'Subject': finalString });
 
